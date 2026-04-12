@@ -5,7 +5,7 @@ import { runAppleScript, showFailureToast } from "@raycast/utils";
 const preferences: Record<string, string> = getPreferenceValues();
 const gramBuild: GramBuild = preferences.build as GramBuild;
 
-const makeNewWindow = async () => {
+const makeNewWindow = async (): Promise<void> => {
   await runAppleScript(`
       tell application "${gramBuild}"
 	    activate
@@ -23,11 +23,11 @@ const makeNewWindow = async () => {
     `);
 }
 
-export default async function command() {
+export default async function command(): Promise<void> {
   try {
     await closeMainWindow();
     await makeNewWindow();
   } catch (error) {
-    showFailureToast(error, { title: "Failed opening new window" });
+    await showFailureToast(error, { title: "Failed opening new window" });
   }
 }

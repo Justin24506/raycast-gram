@@ -46,7 +46,7 @@ export async function getGitBranch(directoryPath: string): Promise<string | null
       !error.message.includes("not a git repository") &&
       !error.message.includes("ambiguous argument 'HEAD'")
     ) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = error.message;
       throw new Error(message);
     }
     return null;

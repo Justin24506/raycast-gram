@@ -20,6 +20,13 @@
       "subtitle": "Gram",
       "description": "Opens a new Gram window.",
       "mode": "no-view"
+    },
+    {
+      "name": "open",
+      "title": "Open with Gram",
+      "subtitle": "Gram",
+      "description": "Opens the currently selected Finder item in Gram",
+      "mode": "no-view"
     }
   ],
   "preferences": [
