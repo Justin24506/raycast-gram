@@ -5,7 +5,6 @@
   "description": "Raycast Extension for Gram",
   "icon": "icon.png",
   "author": "justyt65",
-  "owner": "justinjhill",
   "platforms": [
     "macOS"
   ],

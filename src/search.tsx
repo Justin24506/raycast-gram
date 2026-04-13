@@ -4,7 +4,7 @@ import { usePinnedEntries } from "./hooks/use-pinned-entries";
 import { Entry, getEntry, getEntryPrimaryPath, isEntryMultiFolder } from "./lib/entry";
 import { exists } from "./lib/utils";
 import { Action, ActionPanel, closeMainWindow, getPreferenceValues, Icon, List, showToast, Toast } from "@raycast/api";
-import { GramBuild } from "./lib/db";
+import { GramBuild } from "./lib/gram";
 import { closeGramWindow, getGramBundleId, openWithGramCli } from "./lib/gram";
 import { showOpenStatus } from "./lib/preferences";
 import { isMultiFolder } from "./lib/workspaces";
@@ -174,7 +174,6 @@ export function Command() {
 function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () => void }) {
   const { app, cliPath } = useGramContext();
   const gramIcon = { fileIcon: app.path };
-  const primaryPath = getEntryPrimaryPath(entry);
 
   // Multi-folder workspace - use CLI
   if (isEntryMultiFolder(entry) && cliPath) {

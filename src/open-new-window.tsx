@@ -21,7 +21,7 @@ const makeNewWindow = async (): Promise<void> => {
 	    end tell
       end tell
     `);
-}
+};
 
 export default async function command(): Promise<void> {
   try {

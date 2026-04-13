@@ -1,25 +1,5 @@
 import { execFilePromise } from "./utils";
 
-export type GramBuild = "Gram" | "Gram Dev";
-
-const GramBundleIdBuildMapping: Record<GramBuild, string> = {
-  Gram: "app.liten.Gram",
-  "Gram Dev": "app.liten.Gram-dev",
-};
-
-const GramDbNameMapping: Record<GramBuild, string> = {
-  Gram: "0-stable",
-  "Gram Dev": "0-dev",
-};
-
-export function getGramBundleId(build: GramBuild): string {
-  return GramBundleIdBuildMapping[build];
-}
-
-export function getGramDbName(build: GramBuild): string {
-  return GramDbNameMapping[build];
-}
-
 /**
  * Minimum supported WorkspaceDb schema version.
  */
@@ -46,31 +26,24 @@ export async function queryDb(dbPath: string, query: string): Promise<string> {
 }
 
 /**
- * Get the Gram workspace database schema version.
+ * Detects the Gram workspace database schema version by checking the latest migration step.
  * Returns the version number and whether it's supported by this extension.
  */
 export async function getGramWorkspaceDbVersion(dbPath: string): Promise<{ version: number; supported: boolean }> {
   try {
     const result = await queryDb(dbPath, "SELECT MAX(step) FROM migrations WHERE domain = 'WorkspaceDb';");
-    const version = parseInt(result.trim(), 10);
+    const version = parseInt(result, 10);
 
-    if (isNaN(version)) {
-      console.error(`Error parsing Gram workspace DB version: ${result}`);
-      return { version: 0, supported: false };
-    }
-
+    const isInvalid = isNaN(version);
     return {
-      version,
-      supported: version >= MIN_SUPPORTED_DB_VERSION,
+      version: isInvalid ? 0 : version,
+      supported: !isInvalid && version >= MIN_SUPPORTED_DB_VERSION,
     };
   } catch (error) {
-    // Gram DB might be temporarily locked during write operation
+    // Fallback: If DB is locked (active write), assume it's current to prevent blocking the UI
     if (String(error).includes("Error: in prepare, database is locked")) {
-      console.warn("DB is locked, assuming supported version");
       return { version: MIN_SUPPORTED_DB_VERSION, supported: true };
     }
-
-    console.error(`Error getting Gram workspace DB version: ${error}`);
     return { version: 0, supported: false };
   }
 }

@@ -21,5 +21,3 @@ export interface PinnedEntry extends Entry {
 }
 
 export type PinnedEntries = Record<string, PinnedEntry>;
-
-

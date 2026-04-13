@@ -1,66 +1,47 @@
 import { homedir } from "os";
-import { getApplications, getPreferenceValues } from "@raycast/api";
-import { execWithCleanEnv, isMacOS } from "./utils";
+import { getApplications } from "@raycast/api";
+import { execWithCleanEnv } from "./utils";
 import { gramBuild } from "./preferences";
 import fs from "fs";
 import { runAppleScript } from "@raycast/utils";
 
 export type GramBuild = Preferences["build"];
-export type GramBundleId = "app.liten.Gram"| "app.liten.Gram-Dev";
+export type GramBundleId = "app.liten.Gram" | "app.liten.Gram-Dev";
 
-const GramBundleIdBuildMapping: Record<GramBuild, { macos: GramBundleId }> = {
-  Gram: { macos: "app.liten.Gram" },
-  "Gram Dev": { macos: "app.liten.Gram-Dev" },
+const BuildMetadata: Record<
+  GramBuild,
+  { bundleId: GramBundleId; dbName: string; cli: string; appCli: string; processName: string }
+> = {
+  Gram: {
+    bundleId: "app.liten.Gram",
+    dbName: "0-stable",
+
+    cli: "/usr/local/bin/gram",
+    appCli: "/Applications/Gram.app/Contents/MacOS/cli",
+    processName: "Gram",
+  },
+  "Gram Dev": {
+    bundleId: "app.liten.Gram-Dev",
+    dbName: "0-dev",
+    cli: "/usr/local/bin/gram-dev",
+    appCli: "/Applications/Gram Dev.app/Contents/MacOS/cli",
+    processName: "Gram Dev",
+  },
 };
 
-const GramDbNameMapping: Record<GramBuild, string> = {
-  Gram: "0-stable",
-  "Gram Dev": "0-dev",
-};
-
-/**
- * Known CLI installation paths for Gram on macOS.
- * The CLI can be installed via "gram: install cli" command in Gram.
- */
-const GramCliPaths: Record<GramBuild, string> = {
-  Gram: "/usr/local/bin/gram",
-  "Gram Dev": "/usr/local/bin/gram-dev",
-};
-
-/**
- * Fallback CLI paths inside the Gram app bundle.
- */
-const GramAppCliPaths: Record<GramBuild, string> = {
-  Gram: "/Applications/Gram.app/Contents/MacOS/cli",
-  "Gram Dev": "/Applications/Gram Dev.app/Contents/MacOS/cli",
-};
-
-export function getGramBundleId(build: GramBuild): GramBundleId {
-  return GramBundleIdBuildMapping[build].macos;
+export function getGramBundleId(build: GramBuild = gramBuild): GramBundleId {
+  return BuildMetadata[build].bundleId;
 }
 
-export function getGramDbName(build: GramBuild): string {
-  return GramDbNameMapping[build];
-}
-
-export function getGramDbPath() {
-  const preferences = getPreferenceValues<Preferences>();
-  const GramBuild = preferences.build;
-    return `${homedir()}/Library/Application Support/Gram/db/${getGramDbName(GramBuild)}/db.sqlite`;
+export function getGramDbPath(build: GramBuild = gramBuild): string {
+  const { dbName } = BuildMetadata[build];
+  return `${homedir()}/Library/Application Support/Gram/db/${dbName}/db.sqlite`;
 }
 
 export async function getGramApp() {
   const applications = await getApplications();
-  const gramBundleId = getGramBundleId(gramBuild);
-  const app = applications.find((a) => {
-    if (isMacOS) {
-      return a.bundleId === gramBundleId;
-    } else {
-      /* empty */
-    }
-  });
-
-  return app;
+  const bundleId = getGramBundleId(gramBuild);
+  return applications.find((a) => a.bundleId === bundleId);
 }
 
 /**
@@ -69,47 +50,31 @@ export async function getGramApp() {
  * Returns null if no CLI is found.
  */
 export function getGramCliPath(build: GramBuild = gramBuild): string | null {
-  // Check for installed CLI first
-  const installedCliPath = GramCliPaths[build];
-  if (fs.existsSync(installedCliPath)) {
-    return installedCliPath;
-  }
-
-  // Fall back to CLI inside app bundle
-  const appCliPath = GramAppCliPaths[build];
-  if (fs.existsSync(appCliPath)) {
-    return appCliPath;
-  }
-
+  const { cli, appCli } = BuildMetadata[build];
+  if (fs.existsSync(cli)) return cli;
+  if (fs.existsSync(appCli)) return appCli;
   return null;
 }
 
-const GramProcessNameMapping: Record<GramBundleId, string> = {
-  "app.liten.Gram": "Gram",
-  "app.liten.Gram-Dev": "Gram Dev",
-}
-
-export async function closeGramWindow(windowTitle: string, bundleId: GramBundleId): Promise<boolean> {
-  const processName = GramProcessNameMapping[bundleId];
+export async function closeGramWindow(windowTitle: string, build: GramBuild = gramBuild): Promise<boolean> {
+  const { processName } = BuildMetadata[build];
   const escapedTitle = windowTitle.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
   const script = `
-tell application "System Events"
-  tell process "${processName}"
-    repeat with w in (every window)
-      if name of w contains "${escapedTitle}" then
-        click (first button of w whose description is "close button")
-        return "true"
-      end if
-    end repeat
-    return "false"
-  end tell
-end tell
-`;
+      tell application "System Events"
+        tell process "${processName}"
+          set targetWindow to first window whose name contains "${escapedTitle}"
+          if exists targetWindow then
+            click (first button of targetWindow whose description is "close button")
+            return "true"
+          end if
+          return "false"
+        end tell
+      end tell
+    `;
 
   try {
-    const result = await runAppleScript(script);
-    return result === "true";
+    return (await runAppleScript(script)) === "true";
   } catch (error) {
     console.error("Failed to close Gram window:", error);
     return false;

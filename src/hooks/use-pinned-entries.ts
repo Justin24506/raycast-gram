@@ -27,11 +27,12 @@ export function usePinnedEntries() {
     unpinEntry: (entry: Pick<PinnedEntry, "uri">) =>
       setEntries((s) => toDict(toArray(s).filter((e) => e.uri !== entry.uri))),
     unpinAllEntries: () => setEntries({}),
-    moveUp: (entry: PinnedEntry) => setEntries((s) => {
-      const arr = toArray(s);
-      arr.splice(entry.order - 1, 2, arr[entry.order], arr[entry.order - 1]);
-      return toDict(arr);
-    }),
+    moveUp: (entry: PinnedEntry) =>
+      setEntries((s) => {
+        const arr = toArray(s);
+        arr.splice(entry.order - 1, 2, arr[entry.order], arr[entry.order - 1]);
+        return toDict(arr);
+      }),
     moveDown: (entry: PinnedEntry) =>
       setEntries((s) => {
         const arr = toArray(s);

@@ -76,7 +76,7 @@ export function useRecentWorkspaces(dbPath: string, dbVersion: number): RecentWo
     error,
     removeAllEntries,
     removeEntry,
-    revalidate
+    revalidate,
   };
 }
 
@@ -87,4 +87,3 @@ async function deleteEntryById(dbPath: string, id: number) {
 async function deleteAllWorkspaces(dbPath: string) {
   await queryDb(dbPath, "DELETE FROM workspaces;");
 }
-
