@@ -1,5 +1,5 @@
 import { runAppleScript } from "@raycast/utils";
-import { closeMainWindow, getSelectedFinderItems, showToast, Toast, open } from "@raycast/api";
+import { closeMainWindow, getSelectedFinderItems, open, showToast, Toast } from "@raycast/api";
 import { getGramApp } from "./lib/gram";
 
 export const getCurrentFinderPath = async (): Promise<string> => {
@@ -15,32 +15,32 @@ export const getCurrentFinderPath = async (): Promise<string> => {
   return await runAppleScript(getCurrentFinderPathScript);
 };
 
+async function getPathsToOpen(): Promise<string[]> {
+  const finderItems = await getSelectedFinderItems();
+  if (finderItems.length > 0) {
+    return finderItems.map((i) => i.path);
+  }
+  const currentPath = await getCurrentFinderPath();
+  if (!currentPath) {
+    throw new Error("No Finder item selected or active window found");
+  }
+  return [currentPath];
+}
+
 export default async function openWithGram() {
   try {
-    let selectedItems: { path: string }[] = [];
-
-    const finderItems = await getSelectedFinderItems();
-    if (finderItems.length === 0) {
-      const currentPath = await getCurrentFinderPath();
-      if (currentPath) {
-        selectedItems = [{ path: currentPath }];
-      } else {
-        throw new Error("No Finder item selected");
-      }
-    } else {
-      selectedItems = finderItems.map((i) => ({ path: i.path }));
-    }
+    const paths = await getPathsToOpen();
     const app = await getGramApp();
-    for (const { path } of selectedItems) {
-      open(encodeURI(path), app);
-    }
 
+    for (const path of paths) {
+      await open(encodeURI(path), app);
+    }
     await closeMainWindow();
-  } catch (e) {
+  } catch (error) {
     await showToast({
       title: `Failed opening selected Finder item`,
       style: Toast.Style.Failure,
-      message: e instanceof Error ? e.message : String(e),
+      message: error instanceof Error ? error.message : String(error),
     });
   }
 }

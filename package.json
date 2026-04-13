@@ -27,6 +27,13 @@
       "subtitle": "Gram",
       "description": "Opens the currently selected Finder item in Gram",
       "mode": "no-view"
+    },
+    {
+      "name": "search",
+      "title": "Search Recent Projects",
+      "subtitle": "Gram",
+      "description": "Search and open recent projects in Gram",
+      "mode": "view"
     }
   ],
   "preferences": [

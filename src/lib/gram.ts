@@ -3,6 +3,7 @@ import { getApplications, getPreferenceValues } from "@raycast/api";
 import { execWithCleanEnv, isMacOS } from "./utils";
 import { gramBuild } from "./preferences";
 import fs from "fs";
+import { runAppleScript } from "@raycast/utils";
 
 export type GramBuild = Preferences["build"];
 export type GramBundleId = "app.liten.Gram"| "app.liten.Gram-Dev";
@@ -42,12 +43,10 @@ export function getGramDbName(build: GramBuild): string {
   return GramDbNameMapping[build];
 }
 
-export function geGramDbPath() {
+export function getGramDbPath() {
   const preferences = getPreferenceValues<Preferences>();
   const GramBuild = preferences.build;
-  if (isMacOS) {
     return `${homedir()}/Library/Application Support/Gram/db/${getGramDbName(GramBuild)}/db.sqlite`;
-  } else { /* empty */ }
 }
 
 export async function getGramApp() {
@@ -88,6 +87,33 @@ export function getGramCliPath(build: GramBuild = gramBuild): string | null {
 const GramProcessNameMapping: Record<GramBundleId, string> = {
   "app.liten.Gram": "Gram",
   "app.liten.Gram-Dev": "Gram Dev",
+}
+
+export async function closeGramWindow(windowTitle: string, bundleId: GramBundleId): Promise<boolean> {
+  const processName = GramProcessNameMapping[bundleId];
+  const escapedTitle = windowTitle.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+
+  const script = `
+tell application "System Events"
+  tell process "${processName}"
+    repeat with w in (every window)
+      if name of w contains "${escapedTitle}" then
+        click (first button of w whose description is "close button")
+        return "true"
+      end if
+    end repeat
+    return "false"
+  end tell
+end tell
+`;
+
+  try {
+    const result = await runAppleScript(script);
+    return result === "true";
+  } catch (error) {
+    console.error("Failed to close Gram window:", error);
+    return false;
+  }
 }
 
 /**
