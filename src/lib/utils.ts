@@ -68,7 +68,7 @@ export async function execWithCleanEnv(command: string, args: string[]): Promise
 
 export function exists(p: string) {
   try {
-    return existsSync(new URL(p));
+    return existsSync(p.startsWith("file://") ? new URL(p) : p);
   } catch {
     return false;
   }
