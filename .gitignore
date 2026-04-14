@@ -16,4 +16,3 @@ compiled_raycast_rust
 
 # test files
 test/fixtures
-__snapshots__
