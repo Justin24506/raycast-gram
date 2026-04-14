@@ -5,7 +5,7 @@ import { Entry, getEntry, getEntryPrimaryPath, isEntryMultiFolder } from "./lib/
 import { exists } from "./lib/utils";
 import { Action, ActionPanel, closeMainWindow, getPreferenceValues, Icon, List, showToast, Toast } from "@raycast/api";
 import { GramBuild } from "./lib/gram";
-import { closeGramWindow, getGramBundleId, openWithGramCli } from "./lib/gram";
+import { closeGramWindow, openWithGramCli } from "./lib/gram";
 import { showOpenStatus } from "./lib/preferences";
 import { isMultiFolder } from "./lib/workspaces";
 import { EntryItem } from "./components/entry-item";
@@ -34,11 +34,10 @@ export function Command() {
 
   const preferences = getPreferenceValues<Preferences>();
   const gramBuild = preferences.build as GramBuild;
-  const bundleId = getGramBundleId(gramBuild);
 
   const closeEntry = async (entry: Entry) => {
     const toast = await showToast({ style: Toast.Style.Animated, title: "Closing project..." });
-    const success = await closeGramWindow(entry.title, bundleId);
+    const success = await closeGramWindow(entry.title, gramBuild);
     if (success) {
       toast.style = Toast.Style.Success;
       toast.title = "Project closed";
