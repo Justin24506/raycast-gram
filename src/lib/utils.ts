@@ -6,9 +6,6 @@ import { existsSync } from "node:fs";
 
 export const execFilePromise = util.promisify(execFile);
 
-export const isWindows = process.platform === "win32";
-export const isMacOS = process.platform === "darwin";
-
 export function shellEscape(arg: string): string {
   return `'${arg.replace(/'/g, "'\\''")}'`;
 }
