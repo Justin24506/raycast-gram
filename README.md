@@ -1,6 +1,6 @@
 # Gram
 
-A Raycast extension that allows you to quickly access, pin and open your recent projects in the Gram editor.
+A Raycast extension that allows you to quickly access, pin and open your recent projects in the [Gram editor](https://gram-editor.com).
 
 ## Features
 
