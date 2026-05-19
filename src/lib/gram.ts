@@ -10,14 +10,14 @@ export type GramBundleId = "app.liten.Gram" | "app.liten.Gram-Dev";
 
 const BuildMetadata: Record<
   GramBuild,
-  { bundleId: GramBundleId; dbName: string; cli: string; appCli: string; processName: string }
+  { bundleId: GramBundleId; dbName: string; cli: string; appCli: string; extensionPath: string; processName: string }
 > = {
   Gram: {
     bundleId: "app.liten.Gram",
     dbName: "0-stable",
-
     cli: "/usr/local/bin/gram",
     appCli: "/Applications/Gram.app/Contents/MacOS/cli",
+    extensionPath: `${homedir()}/Library/Application Support/Gram/extensions`,
     processName: "Gram",
   },
   "Gram Dev": {
@@ -25,12 +25,17 @@ const BuildMetadata: Record<
     dbName: "0-dev",
     cli: "/usr/local/bin/gram-dev",
     appCli: "/Applications/Gram Dev.app/Contents/MacOS/cli",
+    extensionPath: `${homedir()}/Library/Application Support/Gram Dev/extensions`,
     processName: "Gram Dev",
   },
 };
 
 export function getGramBundleId(build: GramBuild = gramBuild): GramBundleId {
   return BuildMetadata[build].bundleId;
+}
+
+export function getGramExtensionPath(build: GramBuild = gramBuild): string {
+  return BuildMetadata[build].extensionPath;
 }
 
 export function getGramDbPath(build: GramBuild = gramBuild): string {
