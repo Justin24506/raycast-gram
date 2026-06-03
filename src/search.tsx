@@ -205,13 +205,21 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
   const { app, cliPath } = useGramContext();
   const gramIcon = { fileIcon: app.path };
 
+  // Helper to trigger staggered revalidations while Raycast is in the background.
+  // This gives Gram enough time to launch and update its SQLite DB.
+  const triggerRevalidation = () => {
+    setTimeout(revalidate, 500);
+    setTimeout(revalidate, 1500);
+    setTimeout(revalidate, 3000);
+  };
+
   // Multi-folder workspace - use CLI
   if (isEntryMultiFolder(entry) && cliPath) {
     const openMultiFolder = async () => {
       try {
-        setTimeout(revalidate, 200);
         await closeMainWindow();
         await openWithGramCli(cliPath, entry.paths);
+        triggerRevalidation();
       } catch (error) {
         await showToast({
           style: Toast.Style.Failure,
@@ -226,15 +234,31 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
   // If CLI available, use it for consistency (handles revalidation)
   if (cliPath) {
     const openSingleFolder = async () => {
-      setTimeout(revalidate, 200);
-      await closeMainWindow();
-      await openWithGramCli(cliPath!, [entry.paths[0]]);
+      try {
+        await closeMainWindow();
+        await openWithGramCli(cliPath, [entry.paths[0]]);
+        triggerRevalidation();
+      } catch (error) {
+        await showToast({
+          style: Toast.Style.Failure,
+          title: "Failed to open workspace",
+          message: String(error),
+        });
+      }
     };
     return <Action title="Open in Gram" icon={gramIcon} onAction={openSingleFolder} />;
   }
 
   // Fallback: open via URI scheme (no revalidation)
-  return <Action.Open title="Open in Gram" target={entry.uri} application={app} icon={gramIcon} />;
+  return (
+    <Action.Open
+      title="Open in Gram"
+      target={entry.uri}
+      application={app}
+      icon={gramIcon}
+      onOpen={triggerRevalidation}
+    />
+  );
 }
 
 function RemoveActionSection({
