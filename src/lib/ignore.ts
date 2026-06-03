@@ -6,7 +6,13 @@ export async function getIgnoredExtensionsMap(): Promise<IgnoredMap> {
   const data = await LocalStorage.getItem<string>("ignored-extensions-map");
   if (!data) return {};
 
-  const map: IgnoredMap = JSON.parse(data);
+  let map: IgnoredMap;
+  try {
+    map = JSON.parse(data) as IgnoredMap;
+  } catch {
+    return {};
+  }
+
   const now = Date.now();
   let hasChanges = false;
 
@@ -39,6 +45,7 @@ export async function setExtensionIgnore(id: string, durationMs: number | null):
 
 export async function removeExtensionIgnore(id: string): Promise<IgnoredMap> {
   const map = await getIgnoredExtensionsMap();
+  if (!(id in map)) return map;
   delete map[id];
   await LocalStorage.setItem("ignored-extensions-map", JSON.stringify(map));
   return map;

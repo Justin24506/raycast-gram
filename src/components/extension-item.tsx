@@ -27,30 +27,39 @@ export function ExtensionItem({
   const mainMarkdown = [
     `# ${extension.name}`,
     `***`,
-    extension.description ? extension.description.trim() : "_No description provided._",
+    extension.description?.trim() || "_No description provided._",
   ].join("\n\n");
 
   const remoteVersion = extension.version;
   const hasUpdate = isInstalled && installedVersion && installedVersion !== remoteVersion;
 
+  let statusText = "Not Installed";
+  let statusIcon = { source: Icon.Circle, tintColor: Color.SecondaryText };
   const itemAccessories = [];
 
-  if (areUpdatesIgnored) {
-    itemAccessories.push({
-      icon: { source: Icon.EyeDisabled, tintColor: Color.SecondaryText },
-      tooltip: "Auto-updates ignored",
-    });
-  }
-
   if (hasUpdate) {
+    statusText = "Update Available";
+    statusIcon = { source: Icon.ArrowDownCircle, tintColor: Color.Orange };
     itemAccessories.push({
-      icon: { source: Icon.ArrowDownCircle, tintColor: Color.Orange },
+      icon: statusIcon,
       tooltip: `Update available: v${remoteVersion}`,
     });
   } else if (isInstalled) {
+    statusText = "Installed";
+    statusIcon = { source: Icon.CheckCircle, tintColor: Color.Green };
     itemAccessories.push({
-      icon: { source: Icon.CheckCircle, tintColor: Color.Green },
+      icon: statusIcon,
       tooltip: "Installed",
+    });
+  }
+
+  if (areUpdatesIgnored) {
+    statusText = "Installed (Updates Ignored)";
+    statusIcon = { source: Icon.EyeDisabled, tintColor: Color.SecondaryText };
+
+    itemAccessories.unshift({
+      icon: { source: Icon.EyeDisabled, tintColor: Color.SecondaryText },
+      tooltip: "Auto-updates ignored",
     });
   }
 
@@ -65,27 +74,7 @@ export function ExtensionItem({
           markdown={mainMarkdown}
           metadata={
             <List.Item.Detail.Metadata>
-              <List.Item.Detail.Metadata.Label
-                title="Status"
-                text={
-                  areUpdatesIgnored
-                    ? "Installed (Updates Ignored)"
-                    : hasUpdate
-                      ? "Update Available"
-                      : isInstalled
-                        ? "Installed"
-                        : "Not Installed"
-                }
-                icon={
-                  areUpdatesIgnored
-                    ? { source: Icon.EyeDisabled, tintColor: Color.SecondaryText }
-                    : hasUpdate
-                      ? { source: Icon.ArrowDownCircle, tintColor: Color.Orange }
-                      : isInstalled
-                        ? { source: Icon.CheckCircle, tintColor: Color.Green }
-                        : { source: Icon.Circle, tintColor: Color.SecondaryText }
-                }
-              />
+              <List.Item.Detail.Metadata.Label title="Status" text={statusText} icon={statusIcon} />
 
               {hasUpdate ? (
                 <>
@@ -126,23 +115,23 @@ export function ExtensionItem({
 
               <List.Item.Detail.Metadata.Separator />
 
-              {extension.repository ? (
+              {extension.repository && (
                 <List.Item.Detail.Metadata.Link
                   title="Repository"
                   text={getDomainLabel(extension.repository)}
                   target={extension.repository}
                 />
-              ) : null}
+              )}
 
               <List.Item.Detail.Metadata.Separator />
 
-              {extension.provides && extension.provides.length > 0 ? (
+              {!!extension.provides?.length && (
                 <List.Item.Detail.Metadata.TagList title="Provides">
                   {extension.provides.map((capability) => (
                     <List.Item.Detail.Metadata.TagList.Item key={capability} text={capability} color={Color.Magenta} />
                   ))}
                 </List.Item.Detail.Metadata.TagList>
-              ) : null}
+              )}
 
               <List.Item.Detail.Metadata.Separator />
 
@@ -150,11 +139,11 @@ export function ExtensionItem({
                 <List.Item.Detail.Metadata.TagList.Item text={`v${extension.schema_version}`} color={Color.Blue} />
               </List.Item.Detail.Metadata.TagList>
 
-              {extension.wasm_api_version ? (
+              {!!extension.wasm_api_version && (
                 <List.Item.Detail.Metadata.TagList title="WASM API Version">
                   <List.Item.Detail.Metadata.TagList.Item text={`v${extension.wasm_api_version}`} color={Color.Green} />
                 </List.Item.Detail.Metadata.TagList>
-              ) : null}
+              )}
             </List.Item.Detail.Metadata>
           }
         />

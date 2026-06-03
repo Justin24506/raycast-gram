@@ -1,7 +1,6 @@
 import { ActionPanel, Action, Icon } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { getExtensionVersions, ExtensionVersionInfo } from "../lib/extension";
-import { ZedExtension } from "../lib/extension";
+import { getExtensionVersions, ExtensionVersionInfo, ZedExtension } from "../lib/extension";
 
 interface VersionSubmenuProps {
   extension: ZedExtension;

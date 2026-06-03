@@ -106,25 +106,25 @@
     {
       "name": "autoUpdateInterval",
       "type": "dropdown",
-      "title": "Background Updates",
-      "description": "How often should extensions be updated silently?",
+      "title": "Auto-Update Frequency",
+      "description": "How often should extensions be updated automatically?",
       "default": "manual",
       "required": true,
       "data": [
         {
-          "title": "Manual Only",
+          "title": "Disabled (Manual Only)",
           "value": "manual"
         },
         {
-          "title": "Every Hour",
+          "title": "Check Every Hour",
           "value": "1h"
         },
         {
-          "title": "Every Day",
+          "title": "Check Every Day",
           "value": "1d"
         },
         {
-          "title": "Every Week",
+          "title": "Check Every Week",
           "value": "7d"
         }
       ]

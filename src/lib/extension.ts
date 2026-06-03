@@ -1,11 +1,15 @@
 import path from "path";
 import fs from "fs/promises";
 import os from "os";
-import { exec } from "child_process";
+import { execFile } from "child_process";
+import { randomUUID } from "crypto";
 import { promisify } from "util";
 import { apiFetch } from "./api";
+import { createWriteStream } from "fs";
+import { Readable } from "stream";
+import { pipeline } from "stream/promises";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface ZedExtension {
   id: string;
@@ -28,7 +32,7 @@ export interface ZedResponse {
 interface InstallExtensionOptions {
   downloadUrl: string;
   extensionId: string;
-  targetInstalledDir: string;
+  targetInstallDir: string;
 }
 
 interface InstalledExtension {
@@ -43,18 +47,39 @@ export interface ExtensionVersionInfo {
   wasm_api_version: string | null;
 }
 
-export function parseAuthor(authorString: string) {
-  const match = authorString.match(/^([^<]+)(?:\s*<([^>]+)>)?$/);
-  if (match) {
-    return {
-      name: match[1].trim(),
-      email: match[2] ? match[2].trim() : null,
-    };
-  }
-  return { name: authorString.trim(), email: null };
+export function getLatestExtensionDownloadUrl(ext: ZedExtension): string {
+  return `https://api.zed.dev/extensions/${ext.id}/download?min_schema_version=1&max_schema_version=${ext.schema_version}&min_wasm_api_version=0.0.1&max_wasm_api_version=${ext.wasm_api_version || "1.0.0"}`;
 }
 
-export function exactWordMatch(text: string, query: string): boolean {
+export function getVersionedExtensionDownloadUrl(extensionId: string, version: string): string {
+  return `https://api.zed.dev/extensions/${extensionId}/${version}/download`;
+}
+
+export function isExtensionOutdated(
+  ext: ZedExtension,
+  installedVersion: string | undefined,
+  ignoredMap: Record<string, unknown>,
+): boolean {
+  return (
+    !!installedVersion && installedVersion !== "unknown" && installedVersion !== ext.version && !(ext.id in ignoredMap)
+  );
+}
+
+export function parseAuthor(authorString: string): { name: string; email?: string } {
+  const emailStartIdx = authorString.lastIndexOf("<");
+  const emailEndIdx = authorString.lastIndexOf(">");
+
+  if (emailStartIdx === -1 || emailEndIdx === -1 || emailEndIdx < emailStartIdx) {
+    return { name: authorString.trim(), email: undefined };
+  }
+
+  const name = authorString.slice(0, emailStartIdx).trim();
+  const email = authorString.slice(emailStartIdx + 1, emailEndIdx).trim();
+
+  return { name, email };
+}
+
+export function includesAllWords(text: string, query: string): boolean {
   if (!query) return true;
 
   const searchWords = query.toLowerCase().trim().split(/\s+/);
@@ -63,9 +88,9 @@ export function exactWordMatch(text: string, query: string): boolean {
   return searchWords.every((word) => cleanText.includes(word));
 }
 
-export function getDomainLabel(urlKey: string): string {
+export function getDomainLabel(url: string): string {
   try {
-    const hostname = new URL(urlKey).hostname.toLowerCase();
+    const hostname = new URL(url).hostname.toLowerCase();
 
     const platformRegistry: Record<string, string> = {
       "github.com": "GitHub",
@@ -87,98 +112,121 @@ export function getDomainLabel(urlKey: string): string {
   }
 }
 
-export async function downloadAndInstallExtension({
+export async function installExtension({
   downloadUrl,
   extensionId,
-  targetInstalledDir,
+  targetInstallDir,
 }: InstallExtensionOptions): Promise<void> {
-  const isTarGz = true;
-  const tempFilePath = path.join(os.tmpdir(), `${extensionId}.tar.gz`);
-  const finalDestDir = path.join(targetInstalledDir, extensionId);
+  const installId = `${extensionId}-${Date.now()}-${randomUUID()}`;
+  const tempFilePath = path.join(os.tmpdir(), `${installId}.tar.gz`);
+  const finalDestDir = path.join(targetInstallDir, extensionId);
+  const tempExtractDir = path.join(targetInstallDir, `.tmp-${installId}`);
+  const backupDestDir = path.join(targetInstallDir, `.backup-${installId}`);
+  let hasBackup = false;
 
   try {
     const response = await apiFetch(downloadUrl);
+
     if (!response.ok) throw new Error(`Failed to download: ${response.statusText}`);
+    if (!response.body) throw new Error("Response body is empty");
 
-    const buffer = await response.arrayBuffer();
-    await fs.writeFile(tempFilePath, Buffer.from(buffer));
+    await pipeline(
+      Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0]),
+      createWriteStream(tempFilePath),
+    );
 
-    await fs.rm(finalDestDir, { recursive: true, force: true });
+    await fs.mkdir(targetInstallDir, { recursive: true });
+    await fs.mkdir(tempExtractDir, { recursive: true });
+    await execFileAsync("tar", ["-xzf", tempFilePath, "-C", tempExtractDir]);
 
-    await fs.mkdir(finalDestDir, { recursive: true });
-
-    if (isTarGz) {
-      await execAsync(`tar -xzf "${tempFilePath}" -C "${finalDestDir}"`);
-    } else {
-      await execAsync(`unzip -q "${tempFilePath}" -d "${finalDestDir}"`);
+    try {
+      await fs.rename(finalDestDir, backupDestDir);
+      hasBackup = true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
     }
 
-    console.log(`Successfully installed ${extensionId} to ${finalDestDir}`);
+    try {
+      await fs.rename(tempExtractDir, finalDestDir);
+      hasBackup = false;
+    } catch (error) {
+      if (hasBackup) {
+        await fs.rename(backupDestDir, finalDestDir);
+        hasBackup = false;
+      }
+      throw error;
+    }
+
+    await fs.rm(backupDestDir, { recursive: true, force: true });
   } catch (error) {
-    await fs.rm(finalDestDir, { recursive: true, force: true });
+    await fs.rm(tempExtractDir, { recursive: true, force: true });
+    if (hasBackup) {
+      await fs.rename(backupDestDir, finalDestDir);
+    }
     throw error;
   } finally {
     await fs.rm(tempFilePath, { force: true });
+    await fs.rm(tempExtractDir, { recursive: true, force: true });
+    await fs.rm(backupDestDir, { recursive: true, force: true });
   }
 }
 
-export async function getInstalledExtensions(extensionPath: string): Promise<InstalledExtension[]> {
-  const installedFolderPath = path.join(extensionPath, "installed");
+export async function getInstalledExtensions(extensionsDir: string): Promise<InstalledExtension[]> {
+  const installedFolderPath = path.join(extensionsDir, "installed");
 
   try {
-    const files = await fs.readdir(installedFolderPath, { withFileTypes: true });
-    const folders = files.filter((file) => file.isDirectory() || file.isSymbolicLink());
+    const entries = await fs.readdir(installedFolderPath, { withFileTypes: true });
+    const folders = entries.filter(
+      (entry) => !entry.name.startsWith(".") && (entry.isDirectory() || entry.isSymbolicLink()),
+    );
 
-    const extensionPromises = folders.map(async (file) => {
-      const folderName = file.name;
-      const tomlPath = path.join(installedFolderPath, folderName, "extension.toml");
+    const tasks = folders.map(async (entry) => {
+      const extensionId = entry.name;
+      const extensionDir = path.join(installedFolderPath, extensionId);
 
-      try {
-        const tomlContent = await fs.readFile(tomlPath, "utf-8");
+      const version = await getExtensionVersionFromDisk(extensionDir);
 
-        const versionMatch = tomlContent.match(/^version\s*=\s*"([^"]+)"/m);
-
-        return {
-          id: folderName,
-          version: versionMatch ? versionMatch[1] : "unknown",
-        };
-      } catch {
-        try {
-          const jsonPath = path.join(installedFolderPath, folderName, "package.json");
-          const jsonContent = await fs.readFile(jsonPath, "utf-8");
-          const pkg = JSON.parse(jsonContent);
-          return {
-            id: folderName,
-            version: pkg.version || "unknown",
-          };
-        } catch {
-          return {
-            id: folderName,
-            version: "unknown",
-          };
-        }
-      }
+      return { id: extensionId, version };
     });
 
-    return await Promise.all(extensionPromises);
+    return await Promise.all(tasks);
   } catch (error) {
-    console.log("Directory scan failed or directory doesn't exist yet. Error => ", error);
+    console.error("Failed to scan installed extensions directory:", error);
     return [];
   }
+}
+
+async function getExtensionVersionFromDisk(extensionDir: string): Promise<string> {
+  try {
+    const tomlPath = path.join(extensionDir, "extension.toml");
+    const tomlContent = await fs.readFile(tomlPath, "utf-8");
+
+    const versionMatch = tomlContent.match(/^version\s*=\s*["']([^"']+)["']/m);
+    if (versionMatch) return versionMatch[1];
+  } catch {
+    // Fail silently and fall through to look for package.json
+  }
+
+  try {
+    const jsonPath = path.join(extensionDir, "package.json");
+    const jsonContent = await fs.readFile(jsonPath, "utf-8");
+    const manifest = JSON.parse(jsonContent);
+
+    if (manifest.version) return manifest.version;
+  } catch {
+    // Return unknown (only if JSON also failed)
+  }
+  return "unknown";
 }
 
 export async function getExtensionVersions(extensionId: string): Promise<ExtensionVersionInfo[]> {
   try {
     const response = await apiFetch(`https://api.zed.dev/extensions/${extensionId}`);
 
-    if (!response.ok) {
-      throw new Error(`HTTP Error! Status: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP Error! Status: ${response.status}`);
 
     const json = (await response.json()) as ZedResponse;
-
     const data = json.data || [];
-
     return data
       .map((item) => ({
         published_at: new Date(item.published_at).toLocaleDateString(),
