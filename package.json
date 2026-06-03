@@ -16,28 +16,25 @@
     {
       "name": "open-new-window",
       "title": "Open New Window",
-      "subtitle": "Gram",
       "description": "Opens a new Gram window.",
       "mode": "no-view"
     },
     {
       "name": "open",
-      "title": "Open with Gram",
-      "subtitle": "Gram",
+      "title": "Open in Gram",
+      "subtitle": "Current Finder selection",
       "description": "Opens the currently selected Finder item in Gram",
       "mode": "no-view"
     },
     {
       "name": "search",
       "title": "Search Recent Projects",
-      "subtitle": "Gram",
       "description": "Search and open recent projects in Gram",
       "mode": "view"
     },
     {
       "name": "manage-extensions",
       "title": "Manage Gram Extensions",
-      "subtitle": "Gram",
       "description": "Search, download, view and manage extensions for Gram",
       "mode": "view"
     },
@@ -100,7 +97,7 @@
       "type": "checkbox",
       "required": false,
       "label": "Show Open Status",
-      "default": false,
+      "default": true,
       "description": "Display an 'Open' tag for projects currently open in Gram"
     },
     {
