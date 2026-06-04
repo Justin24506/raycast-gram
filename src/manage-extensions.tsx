@@ -64,7 +64,7 @@ const FILTER_CRITERIA: FilterCriterion[] = [
   },
   {
     regex: /repo:(\S+)/,
-    validator: (ext: ZedExtension, val: string) => (ext.repository ?? "").toLowerCase().includes(val),
+    validator: (ext: ZedExtension, val: string) => ext.repository.toLowerCase().includes(val),
   },
   {
     regex: /schema:(\S+)/,
@@ -76,7 +76,7 @@ const FILTER_CRITERIA: FilterCriterion[] = [
   },
   {
     regex: /provides:(\S+)/,
-    validator: (ext: ZedExtension, val: string) => ext.provides?.some((p) => p.toLowerCase().includes(val)) ?? false,
+    validator: (ext: ZedExtension, val: string) => ext.provides.some((p) => p.toLowerCase().includes(val)),
   },
   {
     regex: /date:(\S+)/,
