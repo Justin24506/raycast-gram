@@ -338,12 +338,13 @@ export default function Command() {
       title: `Updating ${outdatedExtensions.length} extensions...`,
     });
 
-    try {
-      let successCount = 0;
+    let successCount = 0;
+    let failureCount = 0;
 
-      for (const ext of outdatedExtensions) {
-        toast.message = `Updating ${ext.name} (${successCount + 1}/${outdatedExtensions.length})`;
+    for (const [index, ext] of outdatedExtensions.entries()) {
+      toast.message = `Updating ${ext.name} (${index + 1}/${outdatedExtensions.length})`;
 
+      try {
         await installExtension({
           downloadUrl: getLatestExtensionDownloadUrl(ext),
           extensionId: ext.id,
@@ -351,18 +352,24 @@ export default function Command() {
         });
 
         successCount++;
+      } catch (error) {
+        failureCount++;
+        console.error(`Failed to update ${ext.name}:`, error);
       }
+    }
 
+    if (failureCount === 0) {
       toast.style = Toast.Style.Success;
       toast.title = `Successfully updated ${successCount} extensions!`;
       toast.message = "";
-      await checkInstallations();
-    } catch (error) {
+    } else {
       toast.style = Toast.Style.Failure;
-      toast.title = "Auto-update failed midway";
-      toast.message = String(error);
-      await checkInstallations();
+      toast.title = `Updated ${successCount}, failed ${failureCount}`;
+      toast.message =
+        failureCount === outdatedExtensions.length ? "No extensions were updated." : "Some updates failed.";
     }
+
+    await checkInstallations();
   }, [outdatedExtensions, targetInstallDir, checkInstallations]);
 
   const handleInstall = useCallback(
