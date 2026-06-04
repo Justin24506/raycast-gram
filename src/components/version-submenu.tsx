@@ -4,6 +4,10 @@ import { getExtensionVersions, ExtensionVersionInfo, ZedExtension } from "../lib
 
 const versionCache = new Cache({ namespace: "extension-versions" });
 
+export function clearVersionCache() {
+  versionCache.clear();
+}
+
 interface VersionSubmenuProps {
   extension: ZedExtension;
   installedVersion?: string;
