@@ -161,12 +161,15 @@ export async function installExtension({
     await fs.rm(tempExtractDir, { recursive: true, force: true });
     if (hasBackup) {
       await fs.rename(backupDestDir, finalDestDir);
+      hasBackup = false;
     }
     throw error;
   } finally {
     await fs.rm(tempFilePath, { force: true });
     await fs.rm(tempExtractDir, { recursive: true, force: true });
-    await fs.rm(backupDestDir, { recursive: true, force: true });
+    if (!hasBackup) {
+      await fs.rm(backupDestDir, { recursive: true, force: true });
+    }
   }
 }
 
