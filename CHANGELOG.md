@@ -1,6 +1,12 @@
 # Gram Changelog
 
-## [New Commands & Fixes] - {PR_MERGE_DATE}
+## [Fix Non-POSIX Shell Support] - {PR_MERGE_DATE}
+
+- Fix projects silently failing to open when the user's default shell is non-POSIX (nushell, elvish, xonsh, pwsh, ...) by falling back to `/bin/zsh` for the `env -i ... -lc` invocation. Previously only fish was handled this way.
+- Surface CLI launch failures via a toast in the single-folder open action so future regressions don't fail silently.
+- from [PR #28027](https://github.com/raycast/extensions/pull/28027)
+
+## [New Commands & Fixes] - 2026-06-04
 
 ### Added
 - **'Manage Extensions' Command:** Allows users to search for, install, uninstall, update, or downgrade (to a user-selected version) extensions for Gram. Includes the ability to ignore updates to certain extensions.
