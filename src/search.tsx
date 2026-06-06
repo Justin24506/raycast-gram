@@ -205,6 +205,8 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
   const { app, cliPath } = useGramContext();
   const gramIcon = { fileIcon: app.path };
 
+  const actionTitle = entry.isOpen ? "Focus Window" : "Open in Gram";
+
   // Helper to trigger staggered revalidations while Raycast is in the background.
   // This gives Gram enough time to launch and update its SQLite DB.
   const triggerRevalidation = () => {
@@ -228,7 +230,7 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
         });
       }
     };
-    return <Action title="Open in Gram" onAction={openMultiFolder} icon={gramIcon} />;
+    return <Action title={actionTitle} onAction={openMultiFolder} icon={gramIcon} />;
   }
 
   // If CLI available, use it for consistency (handles revalidation)
@@ -246,13 +248,13 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
         });
       }
     };
-    return <Action title="Open in Gram" icon={gramIcon} onAction={openSingleFolder} />;
+    return <Action title={actionTitle} icon={gramIcon} onAction={openSingleFolder} />;
   }
 
   // Fallback: open via URI scheme (no revalidation)
   return (
     <Action.Open
-      title="Open in Gram"
+      title={actionTitle}
       target={entry.uri}
       application={app}
       icon={gramIcon}
