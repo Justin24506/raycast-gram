@@ -233,7 +233,21 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
     return <Action title={actionTitle} onAction={openMultiFolder} icon={gramIcon} />;
   }
 
-  // If CLI available, use it for consistency (handles revalidation)
+  // Remote (SSH) entries: paths are relative and not usable with the CLI directly;
+  // fall back to the URI scheme (ssh://user@host/path) which Zed handles natively.
+  if (entry.type === "remote") {
+    return (
+      <Action.Open
+        title={actionTitle}
+        target={entry.uri}
+        application={app}
+        icon={gramIcon}
+        onOpen={triggerRevalidation}
+      />
+    );
+  }
+
+  // If the CLI is available, use it for consistency (handles revalidation)
   if (cliPath) {
     const openSingleFolder = async () => {
       try {
@@ -251,7 +265,7 @@ function OpenInGramAction({ entry, revalidate }: { entry: Entry; revalidate: () 
     return <Action title={actionTitle} icon={gramIcon} onAction={openSingleFolder} />;
   }
 
-  // Fallback: open via URI scheme (no revalidation)
+  // Fallback: open via URI scheme
   return (
     <Action.Open
       title={actionTitle}
