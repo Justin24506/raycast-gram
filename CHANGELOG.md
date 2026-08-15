@@ -3,6 +3,7 @@
 ## [Fix Local Project Launch in Raycast v2] - {PR_MERGE_DATE}
 
 - Open projects before closing Raycast so CLI launches complete reliably. From [PR #30174](https://github.com/raycast/extensions/pull/30174)
+- Update Raycast SDK, utilities, and development dependencies.
 
 ## [Fix Nix aware `$PATH` lookup] - 2026-07-22
 
@@ -32,6 +33,5 @@
 
 ### Fixed
 - Resolved a bug where opening a project via the recent projects menu required navigating to Raycast's main menu and back again for the "Open" badge and associated actions to appear in the UI.
-
 
 ## [Initial Version] - 2026-05-11
