@@ -1,6 +1,10 @@
 # Gram Changelog
 
-## [Fix Nix aware `$PATH` lookup] - {PR_MERGE_DATE}
+## [Fix Local Project Launch in Raycast v2] - {PR_MERGE_DATE}
+
+- Open projects before closing Raycast so CLI launches complete reliably. From [PR #30174](https://github.com/raycast/extensions/pull/30174)
+
+## [Fix Nix aware `$PATH` lookup] - 2026-07-22
 
 - Restore `$PATH` lookup for Nix-managed language tools by supplying `$USER` to the clean login shell. From [PR #29611](https://github.com/raycast/extensions/pull/29611)
 - Update Raycast SDK and devDependencies
@@ -13,7 +17,7 @@
 
 - Fix projects silently failing to open when the user's default shell is non-POSIX (nushell, elvish, xonsh, pwsh, ...) by falling back to `/bin/zsh` for the `env -i ... -lc` invocation. Previously only fish was handled this way.
 - Surface CLI launch failures via a toast in the single-folder open action so future regressions don't fail silently.
-- from [PR #28027](https://github.com/raycast/extensions/pull/28027)
+- From [PR #28027](https://github.com/raycast/extensions/pull/28027)
 
 ## [New Commands & Fixes] - 2026-06-04
 
