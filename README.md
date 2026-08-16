@@ -65,3 +65,7 @@ From each extension result, you can quickly:
 This extension started out as a fork of the [Raycast extension for Zed](https://www.raycast.com/ewgenius/zed-recent-projects), created by **ewgenius** and contributors (tleo19, jylamont, pernielsentikaer, tm.wrnr, true-real-michael, xmorse, ivens_joris, npc203, FollowTheProcess).
 
 This project would not have been possible without their work.
+
+## Featured In 
+
+[Integrations and related tools for Gram](https://gram-editor.com/docs/#:~:text=Raycast%20(Mac)%3A%20https%3A//www.raycast.com/justyt65/gram)
