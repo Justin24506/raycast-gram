@@ -62,6 +62,6 @@ From each extension result, you can quickly:
 
 ## Credits & Acknowledgements
 
-This extension started out as a fork of the [Raycast extension for Zed](https://www.raycast.com/ewgenius/zed-recent-projects), created by **ewgenius** and contributors (tleo19, jylamont, pernielsentikaer, tm.wrnr, true-real-michael, xmorse, ivens_joris).
+This extension started out as a fork of the [Raycast extension for Zed](https://www.raycast.com/ewgenius/zed-recent-projects), created by **ewgenius** and contributors (tleo19, jylamont, pernielsentikaer, tm.wrnr, true-real-michael, xmorse, ivens_joris, npc203, FollowTheProcess).
 
 This project would not have been possible without their work.
