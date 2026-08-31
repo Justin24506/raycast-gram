@@ -128,7 +128,7 @@
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.104.24",
+    "@raycast/api": "^2.1.2",
     "@raycast/utils": "^2.3.0",
     "color-hash": "^2.0.2",
     "tildify": "^3.0.0"
@@ -136,11 +136,11 @@
   "devDependencies": {
     "@raycast/eslint-config": "^2.2.0",
     "@types/color-hash": "^2.0.0",
-    "@types/node": "^26.2.0",
-    "eslint": "^10.8.1",
+    "@types/node": "^26.4.0",
+    "eslint": "^10.9.1",
     "prettier": "^3.9.6",
     "typescript": "<6.1.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "scripts": {
     "build": "ray build",
